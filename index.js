@@ -3,6 +3,7 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
 const core = require("@actions/core");
+const fetch = require("node-fetch");
 
 /**
  * @param {NodeJS.ProcessEnv} env
@@ -16,7 +17,13 @@ async function run(env, body, fs, core) {
   try {
     const templatePath = core.getInput("template-path");
     if (templatePath) {
-      form = yaml.load(fs.readFileSync(templatePath, "utf8"));
+      if (templatePath.startsWith('https://')) {
+        const response = await fetch(templatePath);
+        const text = await response.text();
+        form = yaml.load(text);
+      } else {
+        form = yaml.load(fs.readFileSync(templatePath, "utf8"));
+      }    
     }
   } catch (err) {
     core.error(err);
